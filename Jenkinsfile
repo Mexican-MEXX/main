@@ -1,11 +1,20 @@
 pipeline {
     agent any
-
     stages {
+        stage('Verify tag is on main') {
+            when { expression { env.ref?.startsWith('refs/tags/') } }
+            steps {
+                sh '''
+                    git fetch origin main --tags
+                    TAG="${ref#refs/tags/}"
+                    SHA=$(git rev-list -n 1 "$TAG")
+                    git merge-base --is-ancestor "$SHA" origin/main
+                '''
+            }
+        }
         stage('Prod Deploy') {
             steps {
-                echo 'Развёртывание в production...'
-                // Здесь могут быть шаги деплоя (например, kubectl apply, docker push и т.п.)
+                echo "Deploying release ${env.ref}"
             }
         }
     }
